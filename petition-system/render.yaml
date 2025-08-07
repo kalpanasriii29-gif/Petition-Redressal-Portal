@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: petition-backend
+    env: node
+    plan: free
+    buildCommand: npm --prefix backend install
+    startCommand: npm --prefix backend start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      # Set the following via dashboard or overrides
+      # - key: DATABASE_URL
+      # - key: JWT_SECRET
+      # - key: OFFICIAL_LOGIN_CODE
+      # - key: ADMIN_LOGIN_CODE
+      # - key: FRONTEND_URL
+
+  - type: static
+    name: petition-frontend
+    buildCommand: npm --prefix frontend install && npm --prefix frontend run build
+    publishPath: frontend/build
