@@ -4,11 +4,16 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import petitionRoutes from './routes/petitions.js';
 import adminRoutes from './routes/admin.js';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -31,6 +36,17 @@ app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/petitions', petitionRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Serve React build in production for single-service deploys
+if (process.env.NODE_ENV === 'production') {
+  const buildPath = path.join(__dirname, '..', 'frontend', 'build');
+  app.use(express.static(buildPath));
+  app.get('*', (req, res) => {
+    // Let API 404 fall through to error handler
+    if (req.path.startsWith('/api/')) return res.status(404).json({ message: 'Not found' });
+    return res.sendFile(path.join(buildPath, 'index.html'));
+  });
+}
 
 app.use((err, _req, res, _next) => {
   // eslint-disable-next-line no-console
