@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import petitionRoutes from './routes/petitions.js';
@@ -37,12 +38,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/petitions', petitionRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Serve React build in production for single-service deploys
-if (process.env.NODE_ENV === 'production') {
-  const buildPath = path.join(__dirname, '..', 'frontend', 'build');
+// Serve React build whenever it exists (works for single-service deploys)
+const buildPath = path.join(__dirname, '..', 'frontend', 'build');
+if (fs.existsSync(path.join(buildPath, 'index.html'))) {
   app.use(express.static(buildPath));
   app.get('*', (req, res) => {
-    // Let API 404 fall through to error handler
     if (req.path.startsWith('/api/')) return res.status(404).json({ message: 'Not found' });
     return res.sendFile(path.join(buildPath, 'index.html'));
   });
