@@ -38,13 +38,23 @@ app.use('/api/auth', authRoutes);
 app.use('/api/petitions', petitionRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Serve React build whenever it exists (works for single-service deploys)
-const buildPath = path.join(__dirname, '..', 'frontend', 'build');
-if (fs.existsSync(path.join(buildPath, 'index.html'))) {
-  app.use(express.static(buildPath));
+// Serve SPA from first available directory
+const candidateDirs = [
+  path.join(__dirname, '..', 'frontend', 'build'),
+  path.join(__dirname, 'public'),
+];
+let staticDir = null;
+for (const dir of candidateDirs) {
+  if (fs.existsSync(path.join(dir, 'index.html'))) {
+    staticDir = dir;
+    break;
+  }
+}
+if (staticDir) {
+  app.use(express.static(staticDir));
   app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) return res.status(404).json({ message: 'Not found' });
-    return res.sendFile(path.join(buildPath, 'index.html'));
+    return res.sendFile(path.join(staticDir, 'index.html'));
   });
 }
 
